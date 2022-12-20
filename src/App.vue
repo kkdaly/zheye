@@ -1,27 +1,34 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png" >
-  <HelloWorld msg="Welcome to Your Vue.js + TypeScript App"/>
+  <div class="container">
+    <ColumnList :list="testData"></ColumnList>
+  </div>
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import HelloWorld from './components/HelloWorld.vue'
-
+import ColumnList, { ColumnProps } from './components/ColumnList.vue' // 获取到模板和 接口，获取接口的原因是一会需要创建data定义类型
+// mock数据
+const testData:ColumnProps[] = [
+  {
+    id: 1,
+    title: 'string',
+    avatar: '/img/logo.82b9c7a5.png',
+    description: 'string'
+  }
+]
 export default defineComponent({
   name: 'App',
   components: {
-    HelloWorld
+    ColumnList
+  },
+  setup () {
+    return {
+      testData
+    }
   }
 })
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
+
 </style>
