@@ -1,7 +1,7 @@
 import { ColumnProps, UserProps } from '@/components/GlobalInterface'
 // mock  user导航栏的数据
 export const currentUser:UserProps = {
-  isLogin: false,
+  isLogin: true,
   name: 'kkdaly'
 }
 // mock-展示框的数据数据

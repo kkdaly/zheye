@@ -7,13 +7,20 @@
             <li class="list-inline-item"><a class="btn btn-outline-light my-2">注册</a></li>
         </ul>
         <ul v-else class="list-inline mb-0 btn-outline-light my-2">
-            <li><a class="btn border border-white">你好{{ user.name }}</a></li>
+            <!-- <li><a class="btn border border-white">你好{{ user.name }}</a></li> -->
+            <Dropdown :title="`你好,${user.name}`">
+                <DropdownItem><a href="" class="dropdown-item">新建目录</a></DropdownItem>
+                <DropdownItem disabled><a href="" class="dropdown-item">新建目录</a></DropdownItem>
+                <DropdownItem><a href="" class="dropdown-item">新建目录</a></DropdownItem>
+            </Dropdown>
         </ul>
     </nav>
 </template>
 
 <script setup lang="ts">
 import { defineProps, PropType } from 'vue'
+import Dropdown from './components/Dropdown.vue'
+import DropdownItem from './components/DropdownItem.vue'
 import { UserProps } from '@/components/GlobalInterface' // 定义接口，限制props的类型
 const props = defineProps({
   // props 获取props
