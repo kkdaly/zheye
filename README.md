@@ -664,7 +664,7 @@ import {defineProps,defineEmits} from 'vue' // 获取defineProps 和 defineEmits
 
 <script setup lang="ts">
 import {ref} from 'vue'
-import kkdalyVue from './components/kkdaly.vue'
+import kkdalyVue from './components/kkdaly.vue'  // 这里vue3不需要使用components来注册组件即可在模版里使用子组件
 
 const getValue = (data:string)=>{
   alert('我是父组件定义的自定义事件，我被子组件调用了，他可以像我这里传入数据')
@@ -696,4 +696,312 @@ const emit = defineEmits<IEvent>()  // 通过泛型来限制在传递数据的�
 emit('lmk','我是子组件我给父组件传递数据') // 这里lmk就会有提示了
 
 </script>
+```
+
+
+# 项目开始
+## Vue3中props定义类型
+```
+// 子组件 setup 语法糖模式
+import {defineProps,PropType} from 'vue' 
+
+// 定义接口
+interface ColumnProps{
+    id:number;
+    title:string;
+    avatar:string;
+    description:string;
+}
+
+const props = defineProps({
+  list:{
+    type:Array as PropType<ColumnProps[]>, // 这里通过 PropType将Array这个类型通过 as 断言成 数组下对象的形式[{id:1,title:'',avatar:'',description:''}] 类似这种形式
+    required:true
+  }
+})
+// 这里不用 defineProps<泛型>的原因是，vue3好像不支持这样，如果是复杂类型推荐上面的写法，这种写法值能应付简单类型
+// 参考官网链接 https://cn.vuejs.org/guide/typescript/options-api.html
+```
+## PropType
+ - PropType就是为了给Props设置更复杂的类型所诞生的
+ - 它接受一个泛型，返回这个泛型类型 比如将 Array这个不具体的类型转换成更复杂的类型，因为 props的type只能接受类型构造函数，所以需要转一下
+ - 使用vue默认的Array,只能确定它是一个数组类型,不能确定数组里面的每一项到底是什么样子的 你在setup中,看props.list就是一个any数组,但是如果使用propType<ColumnProps[]\>这个时候,props.list就变成一个ColumnProps的数组,你使用它的时候不论在 ts 中还是模版中都能获得类型的推断和自动补全等等。
+ - 使用方式参考上面
+
+# Form 和Input组件
+## Form
+ - form模板
+```html
+<template>
+    <form  class="validate-form-container">
+      <!-- 通过插槽接收input组件 -->
+        <slot name="default"></slot>
+        <div class="submit-area" >
+          <!-- 定义一个具名插槽，用来接收用户传递的button，如果没有传递就使用这里默认定义的 -->
+            <slot name="submit">
+                <span class="btn btn-danger" @click="submitForm"> submit</span>
+            </slot>
+        </div>
+    </form>
+</template>
+```
+ - 功能实现
+```typescript
+<script lang="ts">
+import { defineComponent, onUnmounted } from 'vue'
+import mitt from 'mitt'  // 导入mitt 因为vue3中没有$on $off这些功能了
+type ValidateFunc = ()=> boolean // 定义获取到的校验函数（input组件传递过来的）
+let funArr:ValidateFunc[] = [] // 存放input的信息，执行后会获得是否通过
+// 新版mitt会有严格的参数校验，在初始化时需要将传递的参数都通过泛型传递给mitt
+type Events = {
+    'form-item-created': ValidateFunc
+}
+export const emitter = mitt<Events>() // 初始化mitt
+/**
+ * FORM的功能
+ * 1. 在初始化from 的时候 需要通过 mitt 定义一个自定义事件来监听input传递的校验参数
+ * 2. 当input触发校验参数后会将校验函数全部传递到一个数组内，这个时候需要等待用户的点击提交按钮来执行校验功能
+ * 3. 点击功能：
+ *    用户不传递button时，是会默认显示一个按钮的
+ *    用户传递button时，会使用用户的按钮
+ *    用户不传递按钮的情况下会默认执行form下自定义的参数校验功能，这个时候form需要传递一个自定义事件 form-submit ，使用自定义事件的组件需要监听，返回值就是校验结果
+ *    用户传递按钮，需要给按钮定义点击事件，在点击事件内通过form组件内的参数校验功能validate来判断是否校验成功
+ */
+export default defineComponent({
+  emits: ['form-submit'], // 声明自定义事件
+  setup (props, context) {
+    // 1. 在初始化form时监听自定义事件
+    // 定义mitt的callback回调函数，input组件初始化后会把校验函数发送到当前组件自定义的事件中，
+    const callback = (func:ValidateFunc) => {
+      funArr.push(func) // 将input的信息push到列表中
+    }
+    // 定义自定义事件
+    emitter.on('form-item-created', callback)
+    // 销毁自定义事件
+    onUnmounted(() => {
+      emitter.off('form-item-created', callback)
+      funArr = []
+    })
+
+    // 点击功能1
+    // 定义点击事件，将获取到的input循环执行并返回
+    // 这个功能是在用户没有给form传递button的时候调用的，form没有传递button会自动引用默认的button，引用默认的button需要在form自定义一个事件，用来接收form组件内点击的结果
+    const submitForm = () => {
+      const result = funArr.map(func => func()).every(result => result)
+      context.emit('form-submit', result) // 触发事件将校验结果返回，用户必须在form定义自定义事件
+    }
+
+    // 点击功能2
+    // 定义校验函数
+    // 校验是否是符合定义的校验要求,需要用户在 form表单定义ref，通过ref获取到表单的validate判断参数是否校验成功
+    const validate = () => {
+      const result = funArr.map(func => func()).every(result => result)
+      return result
+    }
+
+    return {
+      submitForm,
+      validate
+
+    }
+  }
+})
+</script>
+```
+## Input组件 
+ - template模版
+```html
+<template>
+    <div class="validate-input-container pd-3">
+        <input
+            class="form-control"
+            :class="{'is-invalid'
+            :inputRef.error}"
+            :value="inputRef.val"
+            @input="updateValue"
+            @blur="validateInput"
+            v-bind="$attrs"
+             >
+        <span v-if="inputRef.error" class="invalid-feedback">{{ inputRef.message }}</span>
+    </div>
+</template>
+```
+ - 功能实现
+```typescript
+<script lang="ts">
+import { defineComponent, reactive, PropType, onMounted } from 'vue'
+import { emitter } from './ValidateForm.vue'
+const emailReg = /^([a-zA-Z\d][\w-]{2,})@(\w{2,})\.([a-z]{2,})(\.[a-z]{2,})?$/
+
+// 定义校验参数接口
+type rangeProp = {message?:string, length:number}
+interface RuleProp{
+    type:'required' | 'email' | 'range';
+    message?:string;
+    min?:rangeProp,
+    max?:rangeProp
+}
+export type RulesProp = RuleProp[] // 将接口变成列表形式定义成 自定义类型
+export default defineComponent({
+  /**
+   * input的功能
+   * 1. v-model 父组件通过 v-model传递一个值过来，子组件如果改变了传递的值，那么父组件内传递的值也会被改变
+   *    功能实现：
+   *      在vue2中v-model 会给子组件传递一个 名为 value的props，这个value就是v-model传递的值
+   *      在vue2中v-model 还会给子组件定义一个自定义事件 input，当子组件触发这个自定义事件，并且传递了值时，那么父组件传递的值就会被改变
+   *      但是在vue3中 value 被改成了 modeValue, input这个自定义事件被改成了update:modelValue，所以不影响，只是名字变了
+   *      1. 我们先通过接收 modeValue， 给input表单绑定 inputRef定义的value值，（props.modelValue || ''）如果modeValue存在就复制给input表单，如果不存在就给input表单赋值为空字符串
+   *      2. input表单定义input事件，这个事件只要表单内的值有修改就会触发，我们在该事件内修改input的值，并通过emit触发update:modelValue，将值传给父组件修改父组件的数据，这样就实现了双向数据绑定
+   * 2. 表单校验功能
+   *    功能实现：
+   *      需要父组件传递一个ruls校验规则，子组件通过validateInput 来获取到ruls，进行表单校验，校验完成后返回校验结果并渲染模板提示用户失败原因
+   *      还有一个功能和from组件联动的，在初始化的时候mounted时将组件的表单校验函数通过触发自定义事件来向form组件传递校验函数，form组件拿着校验函数去做校验
+   */
+  props: {
+    // input表单校验传递的props
+    rules: {
+      type: Array as PropType<RulesProp>
+    },
+    modelValue: String // v-model传递的props
+  },
+  inheritAttrs: false, // 不希望 attrs继承到组件的根元素中，因为，我们在给组件传递props时，如果子组件不接收，就会放到attr上并给组件的根元素添加上传递的props
+  setup (props, context) {
+    // 创建input值的对象和校验对象
+    const inputRef = reactive({
+      val: props.modelValue || '',
+      error: false,
+      message: ''
+    })
+    // 定义v-model更新函数
+    // 在vue3中，v-model中是有所改变的
+    // vue2 的 props（value）改成了modelValue: vue2的 input事件也改成了 update:modelValue事件
+    // vue3 在父组件定义v-model时 会给子组件传递 modelValue这个props属性，给子组件定义update:modelValue这个自定义事件
+    // 如果子组件获取到modelValue就可以获取到父组件传递的数据，如果子组件通过自定义事件传递了一个值，那么父组件传递的值就会被修改
+
+    const updateValue = (e:KeyboardEvent) => {
+      const targetValue = (e.target as HTMLInputElement).value
+      inputRef.val = targetValue
+      context.emit('update:modelValue', targetValue)
+    }
+
+    // 创建input表单校验函数
+    const validateInput = () => {
+      if (props.rules) {
+        // every 只要遇到false就直接退出，需要将allPassed取反
+        const allPassed = props.rules.every(rule => {
+          let passed = true
+          inputRef.message = rule.message || ''
+          switch (rule.type) {
+            case 'required': // 校验必填
+              passed = (inputRef.val.trim() !== '') // 不等于空 就是true
+
+              break
+            case 'email': // 校验邮箱
+              passed = emailReg.test(inputRef.val) // 正则校验完成 符合正则就是true
+              break
+            case 'range': // 校验最长字符
+            // 校验分三种情况，
+            // 1.如果min 和 max 都传递了，那么需要判断他俩是否都符合
+            // 2. 如果一次只传递了min,那么只需要判断是否小于
+            // 3. 如果一次只传递了max,那么只需要判断是否大于
+            // 因为这里用的 every 只要遇到false才退出，这里都是校验的input不符合的情况才为true，所以需要取反
+              if (rule.min && rule.max) { // 都传递的情况
+                console.log(1)
+                passed = !(inputRef.val.trim().length < rule.min.length || inputRef.val.trim().length > rule.max.length)
+              } else if (rule.min) { // 只传递了min的情况
+                passed = !(inputRef.val.trim().length < rule.min.length) // 小于长度就是true，取反
+                if (!passed) {
+                  if (rule.min?.message) {
+                    inputRef.message = rule.min?.message
+                  }
+                }
+              } else if (rule.max) { // 只传递了max的情况
+                passed = !(inputRef.val.trim().length > rule.max.length) // 大于就是true，取反，让循环抛出错误
+                if (!passed) {
+                  if (rule.max?.message) {
+                    inputRef.message = rule.max?.message
+                  }
+                }
+              }
+              break
+          }
+          return passed
+        })
+        inputRef.error = !allPassed // allPass就是校验的结果,需要将allPassed取反才行，因为every返回的是false，false就是校验失败
+        return allPassed // 返回校验结果 false 是没有成功 ，true是校验成功
+      }
+      return true // 如果没有传递 rules就直接返回true
+    }
+    // 初始化的时候向form组件传递 校验函数
+    onMounted(() => {
+      emitter.emit('form-item-created', validateInput)
+    })
+    return {
+      inputRef,
+      validateInput,
+      updateValue
+    }
+  }
+
+})
+</script>
+```
+## App使用
+ - template模版
+```html
+<template>
+    <!-- form 传入 自定义事件，是在没有传递button的时候生效的 -->
+    <ValidateForm class="row g-3" @form-submit="onFormsubmit" ref="inputRef">
+  <div class="col-auto">
+    <label for="staticEmail2" class="visually-hidden">Email</label>
+    <ValidateInput  :rules="emailRules" v-model="emailValue" type="text" placeholder="请输入邮箱地址"></ValidateInput>
+  </div>
+  <div class="col-auto">
+    <label for="inputPassword2" class="visually-hidden">Password</label>
+    <ValidateInput :rules="passwordRules"  v-model="emailValue" type="password" placeholder="请输入密码"></ValidateInput>
+  </div>
+  <template #submit>
+      <span class="btn btn-danger" @click="openAdd">提交</span>
+  </template>
+</ValidateForm>
+</template>
+```
+ - 使用代码
+```typescript
+<script>
+import { defineComponent, reactive, ref } from 'vue'
+import ValidateInput, { RulesProp } from './components/ValidateInput.vue'
+import ValidateForm from './components/ValidateForm.vue'
+export default defineComponent({
+  name: 'App',
+  components: {
+    ValidateInput,
+    ValidateForm
+  },
+    setup () {
+    const inputRef = ref<any>() // 获取form表单的ref，ref可以调用form表单的方法
+    // 用户自己添加的button的点击事件 
+    const openAdd = () => {
+      console.log(inputRef.value.validate())    // 通过ref获取到form组件内的validate方法来验证校验是否通过
+    }
+    // 用户没传递button时，form自定义事件接收的函数，么有传递button时，form会使用自己定义的button，需要通过自定义事件获取到button校验结果
+    const onFormsubmit = (result:boolean) => {
+      console.log(result, '校验结果')
+    }
+    // 定义一个校验规则
+    const emailRules:RulesProp = [
+      { type: 'required', message: '邮箱地址不能为空' },
+      { type: 'email', message: '请输入正确的电子邮箱格式' }
+    ]
+    // 定义一个校验规则
+    const passwordRules:RulesProp = [
+      { type: 'required', message: '密码不能为空' },
+      // { type: 'range', message: '密码不能小于6位,不能大于12位', min: { length: 6 }, max: { length: 12 } }
+      { type: 'range', min: { message: '密码不能小于6', length: 6 } },
+      { type: 'range', max: { message: '密码不能大于12', length: 12 } }
+
+    ]
+})
+</script>
+
 ```
