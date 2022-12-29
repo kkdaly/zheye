@@ -1005,3 +1005,242 @@ export default defineComponent({
 </script>
 
 ```
+# Vue3中的Router
+ - vue3中router是 4.0版本的vue-router,
+ - vue2中router是 3.0版本的
+## 使用router
+ - router.ts
+```typescript
+import { createRouter, createWebHistory } from 'vue-router'
+import Login from '@/views/Login/Login.vue'
+
+const routerHistory = createWebHistory() // 路由类型函数 就是vue2的history路由
+// createWebHashHistory 就是hash路由 带#号的
+
+const router = createRouter({
+  history:routerHistory,  // history是路由的模式
+  routes:[ // 配置路由
+    {
+      path: '/login',
+      name: 'login',
+      component: Login,
+      meta: { isLogin: true }
+    }
+  ]
+})
+export default router // 导出路由
+
+```
+ - main.ts
+```
+import { createApp } from 'vue' // 创建vue
+import App from './App.vue'  // 引入根模板
+import router from './router'  // 引入路由配置
+const app = createApp(App)  // 创建vue实例
+app.use(router) // 引入 router配置
+app.mount('#app') // 挂载模板
+
+// 引入router，并挂载后，访问/login就会进入login的页面了
+```
+## useRoute 和 useRouter
+ - useRoute就是 vue2中的this.route
+```typescript
+// 使用
+import { useRoute } from 'vue-router'
+const route = useRoute()  // 创建实例
+console.log(route.query) // 获取当前类路由传递的query参数
+```
+ - useRouter就是 vue2中的 this.router
+```typescript
+import {useRouter} from 'vue-router'
+const router = useRouter() // 创建实例
+router.push('/') // 跳转路由
+```
+## 路由守卫
+ - 路由守卫没有改变
+```typescript
+import { createRouter } from 'vue-router'
+const router = createRouter({...})
+// 定义前置路由守卫
+router.beforeEach((to, from, next) => {
+  // 如果进入的路由需要登陆的话，没登陆就会跳转到login
+  if (to.meta.requiredLogin && !store.user.isLogin) {
+    next('/login')
+  } else if (to.meta.isLogin && store.user.isLogin) { //   如果登录了，还是去login的话会强制跳转到/路由
+    next('/')
+  } else {
+    next()
+  }
+})
+```
+
+# Vue3中的vuex
+ - vue3中的vuex 是 4.0版本
+## 使用vuex
+ - store.ts
+```typescript
+import { createStore } from 'vuex'  // 引入vuex
+const store = createStore({
+  // state数据
+  state:{
+    count:0
+  },
+  mutations:{
+    // 定义修改state中count的方法
+    add(state,num){
+      state.count +=num
+    }
+  },
+  actions:{},
+  getters:{
+    // 定义getter 相当于vue中的计算属性
+    getCount(state){
+      return state.count
+    }
+  },
+
+})
+``` 
+ - main.ts
+```typescript
+import { createApp } from 'vue' // 引入vue
+import App from './App.vue'  // 引入html模板
+import store from './store' // 引入store配置
+const app = createApp(App) // 实例化app
+app.use(store) // app引入store
+app.mount('#app') // 挂载模板
+```
+## useStore
+ - 可以通过useStore在vue模板里面使用store数据
+```typescript
+import {useStore} from 'vuex'
+const store = useStore() // 实例化store
+const count = store.state.count // 获取store的数据
+store.commit('add') // 调用muations修改state的数据
+const getCount = compunted(()=>store.getter.getCount)  // 通过计算属性返回getter的数据
+```
+
+
+# Pinia的使用
+## 什么是Pinia
+ -  最初是在 2019 年 11 月左右重新设计使用 Composition API
+ - 同时支持 vue2 和vue3
+ - 并且不需要您使用组合 API。 除了安装和 SSR 之外，两者的 API 都是相同的
+
+## 为什么要使用Pinia
+ - 是vue的存储库，它允许您跨组件/页面共享状态
+ - dev-tools的支持 
+ - 热模块的更换
+ - 支持typescript
+ - 服务端渲染的支持
+## 安装
+```
+npm install pinia
+
+// pinia最新版需要typescript4.4.4以上版本才支持
+```
+## 基本使用
+ - main.ts
+```typescript
+import {createApp} from 'vue'
+import App from './App.vue'
+import { createPinia } from 'pinia' //引入pinia
+// 创建pinia实例
+const pinia = createPinia()
+app = createApp(App)
+app.use(pinia) // 挂载pinia
+app.mount('#app')
+```
+ - sotre.ts
+```typescript
+// 配置store数据
+import { defineStore } from "pinia"
+// 1.定义容器
+// 参数1：容器的ID，必须唯一，将来pinia会把所有的容器挂载到跟容器，每个容器的名字就是这里的ID
+const useMainStore = defineStore('main',{
+/**
+ * state类似于组件的data（setup）用来存储全局的状态
+ * 1. state必须是函数，这样是为了更好的在服务端渲染时避免交叉请求导致的数据污染，如果是客户端渲染则无所谓
+ * 2. 必须是箭头函数，这样是为了更好的ts类型推导
+ * 3. 返回值是一个函数，调用该函数即可得到容器实例
+ */
+ state:()=>{
+  return {
+    count:100,
+    arr:[1,2,3]
+  }
+ },
+ /**
+  * 类似于组件的coumputed,用来封装计算属性，有缓存功能，在同一组件中多次调用则只调用一次
+  */
+ getters:{
+  // getter有两种定义的方式，
+  // 1. 一种可以通过获取到state来操作数据，这样有ts的类型推导
+  // 2. 第二种可以通过this的方式来操作state，这样没有类型推导
+  CountJIA(state){
+    return state.count++
+  }
+  //（不建议）如果不使用state而使用this，此时就不能对返回值类型做自动推导了，必须手动指定
+  countJIA():number{
+    return this.count++ 
+  }
+ },
+ actions:{
+  /**
+   * 注意 不能使用箭头函数来定义actions，一定要使用普通函数，因为使用箭头函数就没办法使用this了
+   */
+  changeState(num:number){
+    // 单独修改state
+    this.count = num
+    //批量修改state
+    this.$path((state)=>{
+      state.count += num
+      state.arr.push(4)
+    })
+  }
+ }
+})
+export default useMainStore //将数据暴露出去
+```
+## 在组件中使用pinia存储的数据
+ - main.vue
+```html
+<template>
+  <div>{{store.arr}}</div>
+  <div>{{count}}</div>
+  <button @click="setValue"></button>
+</template>
+
+<script setup lang="ts">
+import useStore from '../store.ts' // 导入上面定义的pinia配置
+// 【哪里使用写哪里】，此时要在HelloWorld组件中用，那就写这里。这很Composition API
+const store = useStore() // 实例化store数据
+
+// 获取到sotre的数据
+// 禁止！这样会丧失响应性，因为pinia在底层将state用reactive做了处理
+// const { count, arr } = mainStore
+// 解决方案：将结构出的数据做ref响应式代理
+const {count,arr} =  storeToRefs(store) //如果需要解构赋值，需要通过pinia提供的sotreToRefs来解构，因为store下都是reactive定义的数据，如果单纯的解构只会获取到值，不会获取到proxy对象
+
+const setValue = ()=>{
+  // ==============数据修改的几种方式=============
+  // 方式一：直接修改
+  store.count++
+  // 方式二 使用$path(对象)，批量修改，如果需要修改多个数据建议使用这个方法，因为底层做了性能优化
+  store.$path({
+    count: store.count += 1,
+    arr: [...store.arr,4] // 这就不优雅了，所以有了方式三
+  })
+  // 方式三 使用$path(回调函数)，这个更优雅，更推荐
+  // 回调函数中的state参数，就是store里面定义的state
+  store.$path((state)=>{
+    state.count++
+    state.arr.push(4)
+  })
+  // 方式四 当逻辑较为复杂的时候应该封装到actions中，并对外暴露
+  store.CountJIA
+}
+
+
+</script>
+```
