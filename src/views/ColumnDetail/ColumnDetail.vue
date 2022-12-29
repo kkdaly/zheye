@@ -13,7 +13,7 @@
     </div>
 </template>
 <script setup lang="ts">
-import PostList from '@/views/PostList/PostList.vue'
+import PostList from './components/PostList/PostList.vue'
 import { useRoute } from 'vue-router'
 import useStore from '@/store'
 const route = useRoute()

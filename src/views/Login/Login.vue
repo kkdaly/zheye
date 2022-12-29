@@ -20,9 +20,11 @@ import { ref, Ref } from 'vue'
 import ValidateForm from '@/components/ValidateForm/ValidateForm.vue'
 import ValidateInput from '@/components/ValidateInput/ValidateInput.vue'
 import { RulesProp } from '@/components/GlobalInterface'
-import router from '@/router'
+import { useRouter } from 'vue-router'
 import useStore from '@/store'
+// 实例化 router 和store
 const store = useStore()
+const router = useRouter()
 // 定义校验规则
 const emailRules:RulesProp = [
   { type: 'required', message: '邮箱地址不能为空' },

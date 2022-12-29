@@ -20,7 +20,8 @@
 import ColumnList from '@/components/ColumnList/ColumnList.vue'
 import useStore from '@/store'
 
-const store = useStore()
-const list = store.columns
+// home页
+const store = useStore() // 实例化store
+const list = store.columns // 获取到columns信息
 
 </script>

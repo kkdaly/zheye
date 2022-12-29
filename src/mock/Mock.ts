@@ -6,6 +6,7 @@ export const currentUser:UserProps = {
   id: 1,
   columnId: 1
 }
+
 // mock-展示框的数据数据
 export const testData:ColumnProps[] = [
   {

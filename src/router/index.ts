@@ -5,7 +5,7 @@ import Column from '@/views/ColumnDetail/ColumnDetail.vue'
 import Create from '@/views/CreatePost/CreatePost.vue'
 import useStore from '@/store'
 
-const routerHistory = createWebHistory()
+const routerHistory = createWebHistory() // 路由类型函数
 const router = createRouter({
   history: routerHistory, // 设置路由类型 这里为 histroy类型
   routes: [

@@ -20,6 +20,8 @@ import { ref } from 'vue'
 import { RulesProp, PostProps } from '@/components/GlobalInterface'
 import useStore from '@/store'
 import { useRouter } from 'vue-router'
+
+// 实例化 store 和 router
 const router = useRouter()
 const store = useStore()
 // 定义input的数据
