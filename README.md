@@ -1238,7 +1238,7 @@ const setValue = ()=>{
     state.arr.push(4)
   })
   // 方式四 当逻辑较为复杂的时候应该封装到actions中，并对外暴露
-  store.CountJIA
+  store.CountJIA()
 }
 
 
