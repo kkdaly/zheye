@@ -18,7 +18,7 @@ import ValidateForm from '@/components/ValidateForm/ValidateForm.vue'
 import ValidateInput from '@/components/ValidateInput/ValidateInput.vue'
 import { ref } from 'vue'
 import { RulesProp, PostProps } from '@/components/GlobalInterface'
-import useStore from '@/store'
+import { useStore } from '@/store'
 import { useRouter } from 'vue-router'
 
 // 实例化 store 和 router
@@ -39,10 +39,10 @@ const addPost = () => {
     if (columnId) {
       // 创建新的文章
       const newPost:PostProps = {
-        id: new Date().getTime(),
+        _id: new Date().getTime().toString(),
         title: valueTitle.value,
         content: valueContent.value,
-        columnId,
+        column: columnId.toString(),
         createdAt: new Date().toLocaleDateString()
       }
       //   提交commit修改文章

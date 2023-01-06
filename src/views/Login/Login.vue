@@ -21,7 +21,7 @@ import ValidateForm from '@/components/ValidateForm/ValidateForm.vue'
 import ValidateInput from '@/components/ValidateInput/ValidateInput.vue'
 import { RulesProp } from '@/components/GlobalInterface'
 import { useRouter } from 'vue-router'
-import useStore from '@/store'
+import { useStore } from '@/store'
 // 实例化 router 和store
 const store = useStore()
 const router = useRouter()

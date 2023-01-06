@@ -3,7 +3,7 @@ import Home from '@/views/Home/Home.vue'
 import Login from '@/views/Login/Login.vue'
 import Column from '@/views/ColumnDetail/ColumnDetail.vue'
 import Create from '@/views/CreatePost/CreatePost.vue'
-import useStore from '@/store'
+import { useStore } from '@/store'
 
 const routerHistory = createWebHistory() // 路由类型函数
 const router = createRouter({

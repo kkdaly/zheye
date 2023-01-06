@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
-import App from './App.vue'
 import { createPinia } from 'pinia'
+import App from './App.vue'
 import router from './router'
 // 创建pinia 实例
 const pinia = createPinia()

@@ -5,11 +5,19 @@ export interface UserProps{
     id?:number;
     columnId?:number;
 }
-// 列表信息的类型
+
+// 图片数据类型
+interface ImageProps{
+    _id?:string;
+    url:string;
+    createdAt?:string;
+}
+
+// 专栏列表信息类型
 export interface ColumnProps{
-    id:number;
+    _id:string;
     title:string;
-    avatar?:string;
+    avatar?:ImageProps;
     description:string;
 }
 // 表单参数校验的数据类型
@@ -25,12 +33,13 @@ export type RulesProp = RuleProp[] // 将接口变成列表形式定义成 自�
 
 // 创建专栏数据类型
 export interface PostProps {
-    id: number;
+    _id: string;
     title: string;
-    content: string;
-    image?: string;
+    excerpt?:string;
+    content?: string;
+    image?: ImageProps;
     createdAt: string;
-    columnId: number;
+    column: string;
 }
 
 // store的接口
