@@ -3,10 +3,7 @@
     <!-- loading组件 -->
     <Loader v-if="isLoading"></Loader>
     <GlobalHeader :user="currentUser"></GlobalHeader>
-    <!-- 这里通过Supense包裹，是为了让里面的组件变成同步的，因为组件内有异步操作 -->
-    <Suspense>
       <router-view></router-view>
-    </Suspense>
     <footer class="text-center py-4 text-secondary bg-light mt-6">
       <small>
         <ul class="list-inline mb-0">

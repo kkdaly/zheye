@@ -17,13 +17,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 
 import ColumnList from '@/components/ColumnList/ColumnList.vue' // 实例化store
 import { useStore } from '@/store'
 // home页
 const store = useStore()
-// const list = computed(() => store.columns)
-await store.fetchColumns()
-const list = store.columns
+const list = computed(() => store.columns)
+store.fetchColumns()
+// const list = store.columns
 
 </script>
